@@ -1,34 +1,52 @@
 from state import WorkflowState
+import requests
 
 
 def agent1(state: WorkflowState):
-    print("\n========== AGENT 1 ==========")
+
+    print("\n========== VIDEO AGENT ==========")
     print("Input Received:", state["input"])
 
-    state["agent1_output"] = f"Processed by Agent 1 -> {state['input']}"
+    # Dummy Video Agent
+    state["agent1_output"] =  state["input"]
 
     print("Output:", state["agent1_output"])
 
     return state
 
 
+import requests
+
 def agent2(state: WorkflowState):
-    print("\n========== AGENT 2 ==========")
-    print("Input Received:", state["agent1_output"])
 
-    state["agent2_output"] = f"Processed by Agent 2 -> {state['agent1_output']}"
+    print("\n========== TRANSLATOR AGENT ==========")
 
-    print("Output:", state["agent2_output"])
+    response = requests.post(
+        "http://127.0.0.1:8000/translate",
+        json={
+            "text": state["agent1_output"],
+            "language": "ta"
+        }
+    )
+
+    result = response.json()
+
+    state["translated_text"] = result["translated_text"]
+    state["translated_audio"] = result["audio_path"]
+
+    print("Translated Text :", state["translated_text"])
+    print("Audio File      :", state["translated_audio"])
 
     return state
 
-
 def agent3(state: WorkflowState):
-    print("\n========== AGENT 3 ==========")
-    print("Input Received:", state["agent2_output"])
+
+    print("\n========== VOICE AGENT ==========")
+
+    print("Input Received:", state["translated_text"])
 
     state["final_output"] = (
-        f"Final Output Generated -> {state['agent2_output']}"
+        f"Final Output Generated -> {state['translated_text']}"
     )
 
     print("Output:", state["final_output"])
