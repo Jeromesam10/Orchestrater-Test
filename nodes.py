@@ -2,20 +2,41 @@ from state import WorkflowState
 import requests
 
 
+# -------------------------
+# Agent 1 - Video Agent
+# -------------------------
+
 def agent1(state: WorkflowState):
 
     print("\n========== VIDEO AGENT ==========")
     print("Input Received:", state["input"])
 
-    # Dummy Video Agent
-    state["agent1_output"] =  state["input"]
+    # ---------- OPTION 1 ----------
+    # Dummy output (current)
+    state["agent1_output"] = state["input"]
 
-    print("Output:", state["agent1_output"])
+    # ---------- OPTION 2 ----------
+    # When Video API is ready, replace the above line with:
+    #
+    # response = requests.post(
+    #     "http://127.0.0.1:8002/video",
+    #     json={
+    #         "video_path": state["input"]
+    #     }
+    # )
+    #
+    # result = response.json()
+    #
+    # state["agent1_output"] = result["caption"]
+
+    print("Caption :", state["agent1_output"])
 
     return state
 
 
-import requests
+# -------------------------
+# Agent 2 - Translator
+# -------------------------
 
 def agent2(state: WorkflowState):
 
@@ -29,6 +50,11 @@ def agent2(state: WorkflowState):
         }
     )
 
+    if response.status_code != 200:
+        raise Exception(
+            f"Translator API Error\n{response.text}"
+        )
+
     result = response.json()
 
     state["translated_text"] = result["translated_text"]
@@ -39,16 +65,40 @@ def agent2(state: WorkflowState):
 
     return state
 
+
+# -------------------------
+# Agent 3 - Voice Clone
+# -------------------------
+
 def agent3(state: WorkflowState):
 
-    print("\n========== VOICE AGENT ==========")
+    print("\n========== VOICE CLONE AGENT ==========")
 
-    print("Input Received:", state["translated_text"])
-
-    state["final_output"] = (
-        f"Final Output Generated -> {state['translated_text']}"
+    response = requests.post(
+        "http://127.0.0.1:8001/voice",
+        json={
+            "translated_text": state["translated_text"],
+            "speaker_reference": "voices/reference.wav",
+            "language": "ta"
+        }
     )
 
-    print("Output:", state["final_output"])
+    if response.status_code != 200:
+        raise Exception(
+            f"Voice Clone API Error\n{response.text}"
+        )
+
+    result = response.json()
+
+    state["voice_output"] = result["voice_path"]
+
+    state["final_output"] = {
+        "caption": state["agent1_output"],
+        "translated_text": state["translated_text"],
+        "translated_audio": state["translated_audio"],
+        "voice_output": state["voice_output"]
+    }
+
+    print("Voice File :", state["voice_output"])
 
     return state

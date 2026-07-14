@@ -11,4 +11,6 @@ class WorkflowState(TypedDict):
 
     translated_audio: str
 
-    final_output: str
+    voice_output: str
+
+    final_output: dict
